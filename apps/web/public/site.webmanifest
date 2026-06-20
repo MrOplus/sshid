@@ -1,0 +1,15 @@
+{
+  "name": "SSHID — Passkeys for SSH",
+  "short_name": "SSHID",
+  "description": "Fetch all your SSH public keys with a single handle.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0c0f1a",
+  "theme_color": "#0c0f1a",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

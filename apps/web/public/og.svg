@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0c0f1a" />
+      <stop offset="1" stop-color="#080a12" />
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(980 60) rotate(130) scale(640)">
+      <stop stop-color="#2dd4bf" stop-opacity="0.22" />
+      <stop offset="1" stop-color="#2dd4bf" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="accent" x1="80" y1="0" x2="700" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5eead4" />
+      <stop offset="1" stop-color="#34d399" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <rect width="1200" height="630" fill="url(#glow)" />
+  <rect x="1" y="1" width="1198" height="628" rx="0" stroke="#1d2233" />
+
+  <!-- logo mark -->
+  <g transform="translate(80 80)">
+    <rect width="84" height="84" rx="20" fill="#0c0f1a" stroke="#2dd4bf" stroke-opacity="0.4" stroke-width="2" />
+    <path d="M28 30l16 12-16 12" stroke="#2dd4bf" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M50 54h22" stroke="#34d399" stroke-width="7" stroke-linecap="round" />
+  </g>
+  <text x="184" y="138" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="40" font-weight="700" fill="#e2e8f0">ssh<tspan fill="#5eead4">id</tspan></text>
+
+  <!-- headline -->
+  <text x="80" y="300" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="84" font-weight="800" fill="#ffffff">Passkeys for SSH</text>
+  <text x="80" y="372" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="36" font-weight="500" fill="#94a3b8">Fetch all your public keys with a single handle.</text>
+
+  <!-- terminal -->
+  <g transform="translate(80 430)">
+    <rect width="1040" height="118" rx="18" fill="#080a12" stroke="#1d2233" />
+    <circle cx="34" cy="34" r="6" fill="#f87171" fill-opacity="0.7" />
+    <circle cx="56" cy="34" r="6" fill="#fbbf24" fill-opacity="0.7" />
+    <circle cx="78" cy="34" r="6" fill="#34d399" fill-opacity="0.8" />
+    <text x="34" y="92" font-family="JetBrains Mono, Consolas, monospace" font-size="30" fill="#cbd5e1"><tspan fill="#5eead4">curl</tspan> sshid.koorosh.me/alex <tspan fill="#475569">&gt;&gt; ~/.ssh/authorized_keys</tspan></text>
+  </g>
+
+  <text x="1120" y="600" text-anchor="end" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="24" fill="#475569">Open-source · Self-hostable</text>
+</svg>
