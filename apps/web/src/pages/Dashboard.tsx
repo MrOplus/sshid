@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Alert } from '../components/Alert';
 import { CodeBlock } from '../components/CodeBlock';
+import { GenerateKey } from '../components/GenerateKey';
 import { api, type SshKey } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { PUBLIC_HOST, PUBLIC_ORIGIN } from '../lib/constants';
@@ -41,6 +42,7 @@ export function Dashboard() {
 
       <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="space-y-6">
+          <GenerateKey onAdded={(k) => setKeys((prev) => [...prev, k])} />
           <AddKeyForm onAdded={(k) => setKeys((prev) => [...prev, k])} />
 
           <div className="card">

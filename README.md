@@ -38,6 +38,9 @@ This is a clean-room, open-source SSH identity service that you can self-host.
 - 🧭 **Content negotiation.** Browsers get a polished profile page; `curl`/`wget`
   get plain text. Append `.keys` or `?format=txt` to force plain text.
 - 🛡️ **Passkey auth.** Phishing-resistant WebAuthn for register and login.
+- ✨ **In-browser key generation.** Mint an Ed25519 key with Web Crypto; the
+  private key is shown once and never touches the server, the public key is added
+  automatically.
 - 🧩 **Modern key types.** Ed25519, ECDSA, RSA and FIDO `sk-*` keys, validated on
   the wire and fingerprinted (SHA256).
 - 🪶 **Single container.** Node + SQLite. No external services required.
