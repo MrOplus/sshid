@@ -42,7 +42,7 @@ export async function buildRegistrationOptions(params: {
     excludeCredentials: params.existing.map((c) => ({ id: c.id, transports: transportsOf(c) })),
     authenticatorSelection: {
       residentKey: 'preferred',
-      userVerification: 'preferred',
+      userVerification: 'required',
     },
   });
 }
@@ -53,7 +53,7 @@ export async function checkRegistration(params: { response: RegistrationResponse
     expectedChallenge: params.challenge,
     expectedOrigin: origin,
     expectedRPID: rpID,
-    requireUserVerification: false,
+    requireUserVerification: true,
   });
   if (!verification.verified || !verification.registrationInfo) return null;
 
@@ -69,7 +69,7 @@ export async function checkRegistration(params: { response: RegistrationResponse
 export async function buildAuthenticationOptions(credentialsForUser: CredentialRow[]) {
   return generateAuthenticationOptions({
     rpID,
-    userVerification: 'preferred',
+    userVerification: 'required',
     allowCredentials: credentialsForUser.map((c) => ({ id: c.id, transports: transportsOf(c) })),
   });
 }
@@ -84,7 +84,7 @@ export async function checkAuthentication(params: {
     expectedChallenge: params.challenge,
     expectedOrigin: origin,
     expectedRPID: rpID,
-    requireUserVerification: false,
+    requireUserVerification: true,
     credential: {
       id: params.credential.id,
       publicKey: new Uint8Array(Buffer.from(params.credential.public_key, 'base64')),

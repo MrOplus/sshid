@@ -78,10 +78,12 @@ export async function registerSpa(app: FastifyInstance): Promise<void> {
     const handle = rawParam.endsWith('.keys') ? rawParam.slice(0, -'.keys'.length) : rawParam;
     const forceText = rawParam.endsWith('.keys') || (request.query as { format?: string }).format === 'txt';
 
-    // Reserved single-segment paths belong to the SPA router.
-    if (isReservedHandle(handle)) return sendApp(reply);
-
     const valid = handleSchema.safeParse(handle);
+
+    // Reserved single-segment paths belong to the SPA router, unless plain text
+    // was explicitly requested (in which case there is simply no such handle).
+    if (isReservedHandle(handle) && !forceText) return sendApp(reply);
+
     const user = valid.success ? users.byHandle(valid.data) : undefined;
 
     // Browsers (and unrecognised handles without forced text) get the SPA, which
@@ -90,19 +92,24 @@ export async function registerSpa(app: FastifyInstance): Promise<void> {
 
     reply.type('text/plain; charset=utf-8');
     if (!user) {
-      return reply.code(404).send(`# No SSHID found for "@${handle}"\n`);
+      // Only reflect the handle when it is well-formed; otherwise stay generic.
+      const safe = valid.success ? `"@${valid.data}"` : 'that handle';
+      return reply.code(404).send(`# No SSHID found for ${safe}\n`);
     }
 
+    // Exact (case-insensitive) key-type match, validated against supported types.
     const typeFilter = (request.query as { type?: string }).type?.toLowerCase();
     const lines = sshKeys
       .byUser(user.id)
-      .filter((k) => !typeFilter || k.key_type.toLowerCase().includes(typeFilter))
+      .filter((k) => !typeFilter || k.key_type.toLowerCase() === typeFilter)
       .map((k) => (k.label ? `${k.public_key} ${k.label}` : k.public_key));
 
     return reply.header('cache-control', 'public, max-age=60').send(renderAuthorizedKeys(user.handle, lines));
   };
 
-  app.get('/:handle', resolver);
+  // Public read endpoint: give it its own generous limit so curl polling does
+  // not consume the global per-IP budget shared with the API.
+  app.get('/:handle', { config: { rateLimit: { max: 120, timeWindow: '1 minute' } } }, resolver);
 
   // Deep SPA links (e.g. /dashboard after a hard refresh) — serve the app shell.
   app.setNotFoundHandler({ preHandler: app.rateLimit() }, async (request, reply) => {

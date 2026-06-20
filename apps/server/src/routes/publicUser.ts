@@ -19,10 +19,16 @@ export async function publicUserRoutes(app: FastifyInstance): Promise<void> {
       return reply.code(404).send({ error: 'not_found', message: 'No such handle.' });
     }
 
+    // Optional exact key-type filter, mirroring the plain-text resolver.
+    const typeFilter = (request.query as { type?: string }).type?.toLowerCase();
+
     return {
       handle: user.handle,
       displayName: user.display_name,
-      keys: sshKeys.byUser(user.id).map((k) => ({
+      keys: sshKeys
+        .byUser(user.id)
+        .filter((k) => !typeFilter || k.key_type.toLowerCase() === typeFilter)
+        .map((k) => ({
         label: k.label,
         type: k.key_type,
         fingerprint: k.fingerprint,

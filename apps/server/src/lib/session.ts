@@ -13,7 +13,9 @@ function baseCookieOptions(maxAgeSeconds: number): CookieSerializeOptions {
   return {
     path: '/',
     httpOnly: true,
-    sameSite: 'lax',
+    // Strict: the cookie is only sent for same-site requests, so it can never
+    // ride along on a cross-site request forgery.
+    sameSite: 'strict',
     secure: config.isProduction,
     maxAge: maxAgeSeconds,
   };

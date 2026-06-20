@@ -12,12 +12,13 @@ import { config } from '../config.js';
  */
 export async function registerSecurity(app: FastifyInstance): Promise<void> {
   await app.register(helmet, {
-    // The SPA needs inline styles from the bundler and same-origin XHR/WebAuthn.
+    // The bundler emits a linked stylesheet (no inline <style>/style attrs), so
+    // the style policy stays strict; everything is same-origin.
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'"],
         imgSrc: ["'self'", 'data:'],
         connectSrc: ["'self'"],
         fontSrc: ["'self'", 'data:'],
@@ -36,6 +37,19 @@ export async function registerSecurity(app: FastifyInstance): Promise<void> {
   });
 
   await app.register(cookie, { secret: config.sessionSecret });
+
+  // CSRF defense: browsers always attach an Origin header to cross-origin
+  // state-changing requests. Reject any unsafe method whose Origin is present
+  // and does not match our own. Non-browser clients (no Origin) are unaffected,
+  // and the SameSite=Strict session cookie provides defence in depth.
+  const UNSAFE = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+  app.addHook('onRequest', async (request, reply) => {
+    if (!UNSAFE.has(request.method)) return;
+    const origin = request.headers.origin;
+    if (origin && origin !== config.publicOrigin) {
+      await reply.code(403).send({ error: 'forbidden', message: 'Cross-origin request rejected.' });
+    }
+  });
 
   await app.register(rateLimit, {
     global: true,

@@ -26,6 +26,22 @@ const registerStartSchema = z.object({
 const loginStartSchema = z.object({ handle: handleSchema });
 
 /**
+ * Minimal shape guard for an authenticator response before it is handed to the
+ * WebAuthn verifier. This rejects malformed/oversized payloads early instead of
+ * casting arbitrary JSON straight into the library.
+ */
+const webauthnResponseSchema = z
+  .object({
+    id: z.string().min(1).max(1024),
+    rawId: z.string().min(1).max(1024),
+    type: z.literal('public-key'),
+    response: z.record(z.unknown()),
+    clientExtensionResults: z.record(z.unknown()).optional(),
+    authenticatorAttachment: z.string().optional(),
+  })
+  .passthrough();
+
+/**
  * Passkey (WebAuthn) registration and authentication.
  *
  * Each ceremony is two steps. The first returns options and stores the expected
@@ -74,15 +90,22 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       return reply.code(409).send({ error: 'handle_taken', message: 'That handle is already registered.' });
     }
 
+    const body = webauthnResponseSchema.safeParse(request.body);
+    if (!body.success) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'Malformed registration response.' });
+    }
+
     const verified = await checkRegistration({
-      response: request.body as RegistrationResponseJSON,
+      response: body.data as unknown as RegistrationResponseJSON,
       challenge: challenge.challenge,
     });
     if (!verified) {
       return reply.code(400).send({ error: 'verification_failed', message: 'Passkey could not be verified.' });
     }
 
-    const user = users.create(challenge.handle, challenge.displayName ?? '');
+    // Reuse the id encoded into the credential's userHandle so resident-key
+    // resolution maps back to this exact account.
+    const user = users.create(challenge.handle, challenge.displayName ?? '', challenge.userId);
     credentials.create({
       id: verified.id,
       userId: user.id,
@@ -117,15 +140,32 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       return reply.code(400).send({ error: 'challenge_expired', message: 'Login session expired. Try again.' });
     }
 
-    const response = request.body as AuthenticationResponseJSON;
+    const body = webauthnResponseSchema.safeParse(request.body);
+    if (!body.success) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'Malformed authentication response.' });
+    }
+    const response = body.data as unknown as AuthenticationResponseJSON;
+
     const credential = credentials.byId(response.id);
     if (!credential) {
       return reply.code(401).send({ error: 'unknown_credential', message: 'Passkey not recognised.' });
     }
 
+    // The credential must belong to the account the handle resolved to. This ties
+    // the assertion to the handle the user actually typed at login/options.
+    if (!challenge.userId || credential.user_id !== challenge.userId) {
+      return reply.code(401).send({ error: 'verification_failed', message: 'Passkey could not be verified.' });
+    }
+
     const result = await checkAuthentication({ response, challenge: challenge.challenge, credential });
     if (!result) {
       return reply.code(401).send({ error: 'verification_failed', message: 'Passkey could not be verified.' });
+    }
+
+    // Cloned-authenticator detection: a counter that fails to advance (when the
+    // authenticator uses one at all) indicates a possible clone or replay.
+    if (credential.counter > 0 && result.newCounter <= credential.counter) {
+      return reply.code(401).send({ error: 'counter_regression', message: 'Passkey rejected (possible clone).' });
     }
 
     credentials.touch(credential.id, result.newCounter);

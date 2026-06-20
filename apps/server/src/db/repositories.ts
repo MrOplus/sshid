@@ -67,8 +67,7 @@ const stmts = {
 const now = (): string => new Date().toISOString();
 
 export const users = {
-  create(handle: string, displayName: string): UserRow {
-    const id = randomUUID();
+  create(handle: string, displayName: string, id: string = randomUUID()): UserRow {
     const ts = now();
     stmts.insertUser.run(id, handle, handle.toLowerCase(), displayName, ts, ts);
     return stmts.userById.get(id) as UserRow;

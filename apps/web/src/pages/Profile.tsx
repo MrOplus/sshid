@@ -9,7 +9,7 @@ import { NotFound } from './NotFound';
 export function Profile() {
   const { handle = '' } = useParams();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
-  const [state, setState] = useState<'loading' | 'ready' | 'missing'>('loading');
+  const [state, setState] = useState<'loading' | 'ready' | 'missing' | 'error'>('loading');
 
   useEffect(() => {
     let active = true;
@@ -23,7 +23,9 @@ export function Profile() {
       })
       .catch((err) => {
         if (!active) return;
-        setState(err instanceof ApiError && err.status === 404 ? 'missing' : 'missing');
+        // A genuine 404 means the handle is unclaimed; anything else (5xx,
+        // network) is a transient error the user can retry.
+        setState(err instanceof ApiError && err.status === 404 ? 'missing' : 'error');
       });
     return () => {
       active = false;
@@ -34,6 +36,22 @@ export function Profile() {
     return (
       <div className="grid min-h-[calc(100vh-4rem)] place-items-center">
         <Loader2 className="h-6 w-6 animate-spin text-slate-500" />
+      </div>
+    );
+  }
+
+  if (state === 'error') {
+    return (
+      <div className="container-page grid min-h-[calc(100vh-4rem)] place-items-center py-16 text-center">
+        <div className="animate-fade-up">
+          <h1 className="text-2xl font-bold text-white">Couldn’t load this profile</h1>
+          <p className="mx-auto mt-3 max-w-md text-slate-400">
+            Something went wrong reaching the server. Please try again.
+          </p>
+          <button onClick={() => window.location.reload()} className="btn-primary mt-8">
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
