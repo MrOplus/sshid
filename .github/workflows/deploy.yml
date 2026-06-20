@@ -62,7 +62,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Portainer stack redeploy (pull latest image)
+      - name: Trigger Portainer git redeploy
         env:
           PORTAINER_URL: ${{ secrets.PORTAINER_URL }}
           PORTAINER_API_KEY: ${{ secrets.PORTAINER_API_KEY }}
@@ -71,22 +71,19 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Re-deploy the existing stack with its current file + env, forcing an
-          # image pull so the freshly pushed tag is rolled out. Reusing the
-          # stored content means no secrets need to be re-supplied here.
-          content=$(curl -fsS -H "X-API-Key: $PORTAINER_API_KEY" \
-            "$PORTAINER_URL/api/stacks/$STACK_ID/file" | jq -r '.StackFileContent')
+          # The stack is deployed from this Git repository and built on the host.
+          # Re-pull the latest commit and rebuild, preserving the stack's stored
+          # environment (which holds SESSION_SECRET) so no secrets are handled here.
           env_json=$(curl -fsS -H "X-API-Key: $PORTAINER_API_KEY" \
             "$PORTAINER_URL/api/stacks/$STACK_ID" | jq -c '.Env // []')
 
-          jq -n --arg content "$content" --argjson env "$env_json" \
-            '{StackFileContent: $content, Env: $env, Prune: true, PullImage: true}' \
-            > payload.json
+          jq -n --argjson env "$env_json" \
+            '{env: $env, prune: true, pullImage: false}' > payload.json
 
           curl -fsS -X PUT \
             -H "X-API-Key: $PORTAINER_API_KEY" \
             -H "Content-Type: application/json" \
-            "$PORTAINER_URL/api/stacks/$STACK_ID?endpointId=$ENDPOINT_ID" \
+            "$PORTAINER_URL/api/stacks/$STACK_ID/git/redeploy?endpointId=$ENDPOINT_ID" \
             --data @payload.json > /dev/null
 
-          echo "Portainer stack $STACK_ID redeployed."
+          echo "Portainer stack $STACK_ID redeployed from latest commit."
