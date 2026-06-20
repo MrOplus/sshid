@@ -7,6 +7,7 @@ import { config } from '../config.js';
 import { logger } from '../logger.js';
 import { sshKeys, users } from '../db/repositories.js';
 import { handleSchema, isReservedHandle } from '../lib/handle.js';
+import { isSupportedKeyType } from '../lib/sshkey.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -80,9 +81,12 @@ export async function registerSpa(app: FastifyInstance): Promise<void> {
 
     const valid = handleSchema.safeParse(handle);
 
-    // Reserved single-segment paths belong to the SPA router, unless plain text
-    // was explicitly requested (in which case there is simply no such handle).
-    if (isReservedHandle(handle) && !forceText) return sendApp(reply);
+    // Reserved single-segment paths belong to the SPA router — but only hand back
+    // the HTML shell to clients that actually asked for HTML. A non-browser
+    // client hitting a reserved path falls through to a plain 404.
+    if (isReservedHandle(handle)) {
+      return clientWantsHtml(request) ? sendApp(reply) : reply.code(404).type('text/plain; charset=utf-8').send('# Not found\n');
+    }
 
     const user = valid.success ? users.byHandle(valid.data) : undefined;
 
@@ -97,8 +101,10 @@ export async function registerSpa(app: FastifyInstance): Promise<void> {
       return reply.code(404).send(`# No SSHID found for ${safe}\n`);
     }
 
-    // Exact (case-insensitive) key-type match, validated against supported types.
-    const typeFilter = (request.query as { type?: string }).type?.toLowerCase();
+    // Exact (case-insensitive) key-type match. An unrecognised type is ignored
+    // rather than silently returning nothing.
+    const rawType = (request.query as { type?: string }).type?.toLowerCase();
+    const typeFilter = rawType && isSupportedKeyType(rawType) ? rawType : undefined;
     const lines = sshKeys
       .byUser(user.id)
       .filter((k) => !typeFilter || k.key_type.toLowerCase() === typeFilter)

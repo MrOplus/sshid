@@ -2,10 +2,20 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { sshKeys, type SshKeyRow } from '../db/repositories.js';
 import { InvalidPublicKeyError, parsePublicKey } from '../lib/sshkey.js';
+import { noControlChars } from '../lib/validation.js';
 import { requireAuth } from '../plugins/auth.js';
 
 const addKeySchema = z.object({
-  label: z.string().trim().max(80).optional().default(''),
+  // The label is emitted verbatim as a comment in the plain-text
+  // authorized_keys output, so an embedded newline could forge a second key
+  // line. Disallow all control characters.
+  label: z
+    .string()
+    .trim()
+    .max(80)
+    .refine(noControlChars, 'Label cannot contain control characters.')
+    .optional()
+    .default(''),
   publicKey: z.string().min(1).max(16 * 1024),
 });
 

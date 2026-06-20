@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { sshKeys, users } from '../db/repositories.js';
 import { handleSchema } from '../lib/handle.js';
+import { isSupportedKeyType } from '../lib/sshkey.js';
 
 /**
  * Public, unauthenticated profile data consumed by the SPA to render a user's
@@ -20,7 +21,8 @@ export async function publicUserRoutes(app: FastifyInstance): Promise<void> {
     }
 
     // Optional exact key-type filter, mirroring the plain-text resolver.
-    const typeFilter = (request.query as { type?: string }).type?.toLowerCase();
+    const rawType = (request.query as { type?: string }).type?.toLowerCase();
+    const typeFilter = rawType && isSupportedKeyType(rawType) ? rawType : undefined;
 
     return {
       handle: user.handle,

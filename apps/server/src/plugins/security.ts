@@ -47,7 +47,7 @@ export async function registerSecurity(app: FastifyInstance): Promise<void> {
     if (!UNSAFE.has(request.method)) return;
     const origin = request.headers.origin;
     if (origin && origin !== config.publicOrigin) {
-      await reply.code(403).send({ error: 'forbidden', message: 'Cross-origin request rejected.' });
+      return reply.code(403).send({ error: 'forbidden', message: 'Cross-origin request rejected.' });
     }
   });
 

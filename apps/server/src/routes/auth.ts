@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { AuthenticationResponseJSON, RegistrationResponseJSON } from '@simplewebauthn/server';
 import { credentials, users } from '../db/repositories.js';
 import { handleSchema } from '../lib/handle.js';
+import { noControlChars } from '../lib/validation.js';
 import {
   clearChallenge,
   clearSession,
@@ -20,7 +21,13 @@ import { loadUser } from '../plugins/auth.js';
 
 const registerStartSchema = z.object({
   handle: handleSchema,
-  displayName: z.string().trim().max(80).optional().default(''),
+  displayName: z
+    .string()
+    .trim()
+    .max(80)
+    .refine(noControlChars, 'Display name cannot contain control characters.')
+    .optional()
+    .default(''),
 });
 
 const loginStartSchema = z.object({ handle: handleSchema });
@@ -104,8 +111,18 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     }
 
     // Reuse the id encoded into the credential's userHandle so resident-key
-    // resolution maps back to this exact account.
-    const user = users.create(challenge.handle, challenge.displayName ?? '', challenge.userId);
+    // resolution maps back to this exact account. Guard against a handle claimed
+    // in the race between the two ceremony steps (UNIQUE violation -> 409).
+    let user;
+    try {
+      user = users.create(challenge.handle, challenge.displayName ?? '', challenge.userId);
+    } catch (err) {
+      if (err instanceof Error && /UNIQUE/i.test(err.message)) {
+        clearChallenge(reply);
+        return reply.code(409).send({ error: 'handle_taken', message: 'That handle is already registered.' });
+      }
+      throw err;
+    }
     credentials.create({
       id: verified.id,
       userId: user.id,
