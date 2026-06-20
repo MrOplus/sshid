@@ -1,0 +1,29 @@
+# Production deployment from the published GHCR image.
+# This is the compose file deployed as a Portainer stack. Traffic reaches the
+# container through the host's Cloudflare Tunnel, which maps
+# https://sshid.koorosh.me -> http://<host>:${PORT}.
+services:
+  sshid:
+    image: ${SSHID_IMAGE:-ghcr.io/mroplus/sshid:latest}
+    container_name: sshid
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3008}:8080"
+    environment:
+      NODE_ENV: production
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-https://sshid.koorosh.me}
+      RP_ID: ${RP_ID:-sshid.koorosh.me}
+      RP_NAME: ${RP_NAME:-SSHID}
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in the stack environment}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    volumes:
+      - sshid-data:/app/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  sshid-data:

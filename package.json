@@ -1,0 +1,29 @@
+{
+  "name": "sshid",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Open-source passkey-backed SSH public key resolver. Fetch all your public keys with a single handle.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "apps/server",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,web -c blue,magenta \"npm:dev:server\" \"npm:dev:web\"",
+    "dev:server": "npm run dev --workspace @sshid/server",
+    "dev:web": "npm run dev --workspace @sshid/web",
+    "build": "npm run build:web && npm run build:server",
+    "build:web": "npm run build --workspace @sshid/web",
+    "build:server": "npm run build --workspace @sshid/server",
+    "start": "node apps/server/dist/index.js",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
