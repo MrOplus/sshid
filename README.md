@@ -134,22 +134,35 @@ docker compose up -d --build
 
 ## Deployment & CI/CD
 
+The live instance runs as a **Portainer Git stack** that builds the image on the
+host from this repository.
+
+**Continuous deployment** is driven by Portainer's Git polling: the stack checks
+this repo every 5 minutes and automatically rebuilds and redeploys whenever
+`main` advances. This needs no inbound connection to the host, so it works even
+when Portainer sits behind a WAF/Cloudflare.
+
 Pushing to `main` runs [`deploy.yml`](.github/workflows/deploy.yml):
 
-1. Builds a multi-arch image and pushes it to `ghcr.io/mroplus/sshid`.
-2. Calls the Portainer API to redeploy the stack with `PullImage: true`.
+1. **Build & push** a container image to `ghcr.io/mroplus/sshid` (published
+   artifact, also usable with `docker-compose.prod.yml`).
+2. **Redeploy** — a best-effort call to the Portainer API for an immediate
+   rollout. It is marked `continue-on-error` because GitHub-hosted runner IPs may
+   be blocked by the host's WAF; Git polling remains the reliable fallback.
 
-Required repository secrets:
+Required repository secrets (for the best-effort fast-path):
 
 | Secret                  | Example                          |
 | ----------------------- | -------------------------------- |
 | `PORTAINER_URL`         | `https://portainer.koorosh.me`   |
 | `PORTAINER_API_KEY`     | `ptr_…`                          |
-| `PORTAINER_STACK_ID`    | `15`                             |
+| `PORTAINER_STACK_ID`    | `16`                             |
 | `PORTAINER_ENDPOINT_ID` | `3`                              |
 
-The live instance is published at **https://sshid.koorosh.me** through a
-Cloudflare Tunnel that maps the hostname to the container's host port.
+The instance is reached at **https://sshid.koorosh.me** through the host's
+Cloudflare Tunnel, which maps the public hostname to the container's host port
+(`3008`). Because `RP_ID`/`PUBLIC_ORIGIN` are domain-bound for WebAuthn, the
+public hostname must point at the container for passkeys to work.
 
 ## License
 

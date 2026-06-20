@@ -61,6 +61,11 @@ jobs:
     needs: build-and-push
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    # Primary CD is Portainer's git polling (the stack pulls this repo every 5m and
+    # redeploys on new commits). This job is a best-effort fast-path that pushes the
+    # redeploy immediately; it is allowed to fail when the Portainer host sits behind
+    # a WAF that blocks GitHub-hosted runner IPs.
+    continue-on-error: true
     steps:
       - name: Trigger Portainer git redeploy
         env:
