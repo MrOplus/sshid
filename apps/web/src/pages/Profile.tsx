@@ -80,7 +80,7 @@ export function Profile() {
       </header>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_380px]">
-        <div className="card">
+        <div className="card min-w-0">
           <div className="flex items-center justify-between border-b border-ink-700/70 px-6 py-4">
             <h2 className="font-semibold text-white">Public keys</h2>
             <span className="rounded-full bg-ink-800 px-2.5 py-0.5 text-xs text-slate-400">
@@ -113,7 +113,7 @@ export function Profile() {
           )}
         </div>
 
-        <aside className="space-y-4">
+        <aside className="min-w-0 space-y-4">
           <CodeBlock label="add to a server" code={`curl -fsSL ${PUBLIC_HOST}/${profile.handle} >> ~/.ssh/authorized_keys`}>
             <span className="text-accent-400">curl</span> -fsSL {PUBLIC_HOST}/{profile.handle}{' '}
             <span className="text-slate-300">&gt;&gt;</span> ~/.ssh/authorized_keys

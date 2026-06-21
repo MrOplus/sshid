@@ -23,7 +23,7 @@ export function CodeBlock({ code, children, label }: CodeBlockProps) {
   };
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-ink-700 bg-ink-950/80">
+    <div className="group relative min-w-0 max-w-full overflow-hidden rounded-2xl border border-ink-700 bg-ink-950/80">
       <div className="flex items-center justify-between border-b border-ink-700/70 px-4 py-2.5">
         <div className="flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-full bg-rose-400/70" />

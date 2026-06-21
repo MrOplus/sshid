@@ -41,7 +41,7 @@ export function Dashboard() {
       </header>
 
       <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <GenerateKey onAdded={(k) => setKeys((prev) => [...prev, k])} />
           <AddKeyForm onAdded={(k) => setKeys((prev) => [...prev, k])} />
 
@@ -79,7 +79,7 @@ export function Dashboard() {
           </div>
         </div>
 
-        <aside className="space-y-4">
+        <aside className="min-w-0 space-y-4">
           <div className="card p-6">
             <h2 className="font-semibold text-white">Your public URL</h2>
             <p className="mt-1.5 text-sm text-slate-400">Anyone can resolve your keys from here.</p>

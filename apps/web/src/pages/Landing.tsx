@@ -36,7 +36,7 @@ function Hero() {
   return (
     <section className="relative overflow-hidden">
       <div className="container-page grid items-center gap-12 pt-16 pb-12 lg:grid-cols-2 lg:pt-24">
-        <div className="animate-fade-up">
+        <div className="min-w-0 animate-fade-up">
           <span className="inline-flex items-center gap-2 rounded-full border border-ink-700 bg-ink-900/70 px-3 py-1 text-xs font-medium text-accent-400">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-accent-400" />
@@ -76,7 +76,7 @@ function Hero() {
           </p>
         </div>
 
-        <div className="animate-fade-up [animation-delay:120ms]">
+        <div className="min-w-0 animate-fade-up [animation-delay:120ms]">
           <CodeBlock
             label="your terminal"
             code={`curl ${PUBLIC_HOST}/${SAMPLE_HANDLE} >> ~/.ssh/authorized_keys`}
